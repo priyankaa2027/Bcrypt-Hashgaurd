@@ -1,89 +1,102 @@
-# Bcrypt Demo
 
-A simple Node.js application demonstrating user registration and login with password hashing using bcrypt. This project uses Express for the backend and vanilla HTML/JS for the frontend.
+# Secure Auth System (Node.js, Express, MongoDB, JWT)
+
+A full-stack authentication system using Node.js, Express, MongoDB (Mongoose), bcrypt, JWT, and best security practices.
 
 ## Features
-- User registration with password hashing (bcryptjs)
-- User login with password verification
-- In-memory user storage (no database)
-- Simple frontend forms for registration and login
-- CORS enabled for API routes
+- User registration & login with password hashing (bcrypt)
+- MongoDB database for persistent user storage
+- Robust username & password validation
+- JWT-based session management
+- Rate limiting for login attempts
+- Environment variables for secrets & DB credentials
+- Protected dashboard page (JWT required)
+- Logout functionality
+- Secure routes with authentication middleware
+- HTTPS-ready for production
+- Unit tests for core features
 
 ## Project Structure
 ```
 bcrypt-demo/
-├── package.json
 ├── server.js
-└── public/
-    ├── index.html
-    ├── login.html
-    ├── register.html
-    └── script.js
+├── .env.example
+├── models/
+│   └── User.js
+├── routes/
+│   └── auth.js
+├── middleware/
+│   └── auth.js
+├── public/
+│   ├── register.html
+│   ├── login.html
+│   ├── dashboard.html
+│   └── style.css
+└── tests/
+    └── auth.test.js
 ```
 
 ## Getting Started
 
 ### Prerequisites
-- Node.js (v14+ recommended)
+- Node.js (v16+ recommended)
+- MongoDB (local or cloud)
 
 ### Installation
-1. Clone the repository or download the source code.
-2. Navigate to the project folder:
+1. Clone the repository:
    ```powershell
+   git clone <repo-url>
    cd bcrypt-demo
    ```
-3. Install dependencies:
+2. Install dependencies:
    ```powershell
    npm install
    ```
+3. Copy `.env.example` to `.env` and fill in your MongoDB URI and JWT secret.
 
 ### Running the Server
-Start the server with:
 ```powershell
 node server.js
 ```
-The server will run at [http://localhost:3000](http://localhost:3000).
+Server runs at [http://localhost:3000](http://localhost:3000).
 
 ## Usage
 
 ### Registration
-- Go to `/register.html` in your browser.
-- Enter a username and password, then submit the form.
-- The password is hashed and stored in memory.
+- Go to `/register.html` and create a new account.
+- Password must be at least 8 characters, include uppercase, lowercase, number, and special character.
 
 ### Login
-- Go to `/login.html` in your browser.
-- Enter your username and password, then submit the form.
-- The server verifies the password using bcrypt.
+- Go to `/login.html` and log in.
+- On success, you are redirected to `/dashboard.html`.
+
+### Dashboard
+- Accessible only with a valid JWT token.
+- Shows a welcome message and logout button.
 
 ### API Endpoints
-- `POST /api/register` — Register a new user. Expects `{ username, password }` in JSON body.
-- `POST /api/login` — Login with credentials. Expects `{ username, password }` in JSON body.
-- `GET /debug/users` — Returns all registered users (for debugging; shows hashed passwords).
+- `POST /api/auth/register` — Register a new user. `{ username, password }`
+- `POST /api/auth/login` — Login and receive JWT. `{ username, password }`
+- `POST /api/auth/logout` — Logout (client deletes token)
+- `GET /api/dashboard` — Protected route, requires JWT
 
-## Frontend Files
-- `index.html`: Main landing page with styled forms.
-- `register.html`: Registration form and logic.
-- `login.html`: Login form and logic.
-- `script.js`: Handles form submissions (if used in `index.html`).
+## Environment Variables
+See `.env.example` for required variables:
+- `MONGO_URI` — MongoDB connection string
+- `JWT_SECRET` — Secret for signing JWT tokens
+- `PORT` — Server port
 
-## Backend (`server.js`)
-- Uses Express for routing and middleware.
-- Uses bcryptjs for password hashing and comparison.
-- Stores users in an in-memory array (not persistent).
+## Security Best Practices
 
-## Dependencies
-- express
-- bcryptjs
-- body-parser
-- cors
+## Testing
+  ```powershell
+  npm test
+  ```
 
-## Security Notes
-- This demo uses in-memory storage and is **not** suitable for production.
-- For real applications, use a database and implement proper authentication and validation.
+## Deployment
 
 ## License
 ISC
 
----
-Feel free to modify and extend this project for learning or prototyping purposes.
+Feel free to modify and extend for learning or production use!
+

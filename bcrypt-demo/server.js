@@ -1,73 +1,53 @@
-// server.js
-const express = require("express");
-const bcrypt = require("bcryptjs");
-const path = require("path");
-const cors = require("cors");
+
+require('dotenv').config();
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const path = require('path');
+const helmet = require('helmet');
+const authRoutes = require('./routes/auth');
+const authMiddleware = require('./middleware/auth');
 
 const app = express();
 
 // Middleware
-app.use(express.json());
+app.use(helmet());
 app.use(cors());
-app.use(express.urlencoded({ extended: true })); // to handle form submissions
-app.use(express.static(path.join(__dirname, "public"))); // serves HTML files from public/
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
-// In-memory "database"
-let users = [];
+// MongoDB Connection
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+}).then(() => console.log('MongoDB connected'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
-// Register route (API)
-app.post("/api/register", async (req, res) => {
-  try {
-    const { username, password } = req.body;
-    if (!username || !password) {
-      return res.status(400).json({ message: "Username and password required" });
-    }
+// Auth routes
+app.use('/api/auth', authRoutes);
 
-    // Check if user already exists
-    if (users.find((u) => u.username === username)) {
-      return res.status(400).json({ message: "User already exists" });
-    }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Save user
-    users.push({ username, password: hashedPassword });
-    res.json({ message: "✅ User registered successfully!" });
-  } catch (err) {
-    res.status(500).json({ message: "Something went wrong", error: err.message });
-  }
+// Protected dashboard route
+app.get('/api/dashboard', authMiddleware, (req, res) => {
+  res.json({ message: `Welcome, ${req.user.username}! This is your dashboard.` });
 });
 
-// Login route (API)
-app.post("/api/login", async (req, res) => {
-  try {
-    const { username, password } = req.body;
-    const user = users.find((u) => u.username === username);
-
-    if (!user) return res.status(400).json({ message: "User not found" });
-
-    const isValid = await bcrypt.compare(password, user.password);
-    if (!isValid) return res.status(400).json({ message: "Invalid password" });
-
-    res.json({ message: "✅ Login successful!" });
-  } catch (err) {
-    res.status(500).json({ message: "Something went wrong", error: err.message });
-  }
+// Fallback for SPA routing
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Debug route
-app.get("/debug/users", (req, res) => {
-  res.json(users);
-});
-
-// Root
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
-// Port
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
+
+// HTTPS best practices (for production)
+// Use a reverse proxy (e.g., Nginx) to terminate SSL, or use https.createServer with SSL certs
+// Example:
+// const https = require('https');
+// const fs = require('fs');
+// const server = https.createServer({
+//   key: fs.readFileSync('key.pem'),
+//   cert: fs.readFileSync('cert.pem')
+// }, app);
+// server.listen(PORT);
